@@ -17,6 +17,13 @@ class User(SqlAlchemyBase):
     email = sqlalchemy.Column(sqlalchemy.String, unique=True)
     hashed_password = sqlalchemy.Column(sqlalchemy.String)
     modified_date = sqlalchemy.Column(sqlalchemy.DateTime)
+    username=sqlalchemy.Column(sqlalchemy.String,unique=True)
+
+    def set_password(self, password):
+        self.hashed_password = generate_password_hash(password)
+
+    def check_password(self, password):
+        return check_password_hash(self.hashed_password, password)
 
 
 class Jobs(SqlAlchemyBase):

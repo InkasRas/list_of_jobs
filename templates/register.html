@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>Register form</h2>
+<form method="post" action="" novalidate>
+    {{form.hidden_tag()}}
+    {{form.csrf_tocken}}
+    {% for field in form if field.name != 'csrf_token'%}
+        <p>
+            {% if field.name!='submit' %}
+                {{ field.label }}<br>
+                {{ field(class="form-control") }}<br>
+                {% for error in field.errors %}
+                    <p class="alert alert-danger" role="alert">
+                        {{ error }}
+                    </p>
+                    {% endfor %}
+            {% else %}
+                {{ field(type="submit", class="btn btn-primary") }}
+            {% endif %}
+        </p>
+    {% endfor %}
+</form>
+{% endblock %}
