@@ -31,6 +31,12 @@ def register():
     form = RegisterForm()
     if form.validate_on_submit():
         session = db_session.create_session()
+        if session.query(User).filter(User.email==form.email.data).first():
+            form.email.errors.append('Email already exists')
+            return render_template('register.html',form=form,title='Register')
+        elif session.query(User).filter(User.username==form.login.data).first():
+            form.login.errors.append('Username already exists')
+            return render_template('register.html',form=form,title='Register')
         new_user = User(surname=form.surname.data,
                         name=form.name.data,
                         email=form.email.data,
