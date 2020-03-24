@@ -1,6 +1,8 @@
 from flask_wtf import FlaskForm
-from wtforms import StringField, PasswordField, BooleanField, SubmitField, IntegerField
+from wtforms import StringField, PasswordField, BooleanField, SubmitField, IntegerField, DateField, DateTimeField, \
+    TextAreaField, FloatField
 from wtforms.validators import DataRequired, Email, EqualTo, ValidationError, Length
+import datetime
 
 
 def age_test(form, field):
@@ -23,3 +25,21 @@ class RegisterForm(FlaskForm):
     speciality = StringField('Speciality', validators=valids)
     address = StringField('Address', validators=valids)
     submit = SubmitField('Register')
+
+
+class LoginForm(FlaskForm):
+    email = StringField('Email', validators=[DataRequired()])
+    password = PasswordField('Password', validators=[DataRequired()])
+    remember_me = BooleanField('Remember me', default=False)
+    submit = SubmitField('Login')
+
+
+class NewJobForm(FlaskForm):
+    team_leader = IntegerField('Team leader id', validators=[DataRequired()])
+    job = TextAreaField('Job description', validators=[DataRequired()])
+    work_size = FloatField('Work size', validators=[DataRequired()])
+    collaborator = StringField('Collaborators', validators=[DataRequired()])
+    start_date = DateField('Start date', default=datetime.datetime.today(), format='%Y-%m-%d')
+    end_date = DateField('End date', default=datetime.datetime.today(), format='%Y-%m-%d')
+    is_finished = BooleanField('Is finished', default=False)
+    submit = SubmitField('Add job')
