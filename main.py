@@ -1,6 +1,7 @@
 import sqlalchemy
 import datetime
 import db_session
+import os
 from __all_models import User, Jobs
 from flask import Flask, render_template, redirect, url_for, session, request, make_response
 from forms import RegisterForm, LoginForm, NewJobForm
@@ -135,4 +136,5 @@ def not_found(error):
 
 if __name__ == '__main__':
     db_session.global_init('blogs.sqlite')
-    app.run()
+    porrt=int(os.environ.get('PORT',5000))
+    app.run(host='0.0.0.0',port=porrt)
