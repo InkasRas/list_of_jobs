@@ -2,9 +2,9 @@ import sqlalchemy
 import datetime
 import db_session
 import os
-from __all_models import User, Jobs
+from __all_models import User, Jobs, Departments
 from flask import Flask, render_template, redirect, url_for, session, request, make_response, abort
-from forms import RegisterForm, LoginForm, NewJobForm
+from forms import RegisterForm, LoginForm, NewJobForm, NewDepartmentForm
 from flask_login import login_user, LoginManager, current_user, logout_user, login_required
 
 app = Flask(__name__)
@@ -20,18 +20,46 @@ def load_user(id):
     return sesion.query(User).get(id)
 
 
-@app.route('/')
+@app.route('/base')
 def base():
     sesion = db_session.create_session()
-    jobs = {'jobs': []}
-    for job in sesion.query(Jobs):
-        job_json = {'job': {}}
-        job_json['job']['user'] = job.tm_leader
-        job_json['job']['job'] = job
-        if current_user.is_authenticated and (current_user.id == job.tm_leader.id or current_user.id == job.creator_id):
-            job_json['job']['btns'] = True
-        jobs['jobs'].append(job_json)
-    return render_template('jobs.html', jobs=jobs)
+    if request.args.get('type', 'job') == 'dep':
+        print()
+        deprts = {'deps': []}
+        for dep in sesion.query(Departments):
+            dep_json = {'dep': {}}
+            dep_json['dep']['user'] = dep.chief_m
+            dep_json['dep']['dep'] = dep
+            if current_user.is_authenticated and current_user.id == dep.chief_m.id:
+                dep_json['dep']['btns'] = True
+            deprts['deps'].append(dep_json)
+        return render_template('jobs.html', type='dep', deprts=deprts, ad_tit='Departments')
+    else:
+        jobs = {'jobs': []}
+        for job in sesion.query(Jobs):
+            job_json = {'job': {}}
+            job_json['job']['user'] = job.tm_leader
+            job_json['job']['job'] = job
+            if current_user.is_authenticated and (
+                    current_user.id == job.tm_leader.id or current_user.id == job.creator_id):
+                job_json['job']['btns'] = True
+            jobs['jobs'].append(job_json)
+        return render_template('jobs.html', jobs=jobs, type='job', ad_tit='Jobs')
+
+
+@app.route('/')
+def basee():
+    return redirect(url_for('base', type='job'))
+
+
+@app.route('/joblist')
+def joblist():
+    return redirect(url_for('base', type='job'))
+
+
+@app.route('/deplist')
+def deplist():
+    return redirect(url_for('base', type='dep'))
 
 
 @app.route('/success')
@@ -78,52 +106,113 @@ def check_job(form, template):
     return {'response': ['OK', datetime1, datetime2]}
 
 
-@app.route('/deletejob/<int:job_id>', methods=['GET', 'POST'])
-@login_required
-def delete_job(job_id):
+def check_new_dep(form: NewDepartmentForm):
     sesion = db_session.create_session()
-    job = sesion.query(Jobs).get(job_id)
-    if not job:
+    if not sesion.query(User).get(form.chief.data):
+        form.chief.errors.append('Chief does not exist')
+        sesion.close()
+        return {'response': form}
+    sesion.close()
+    return {'response': 'OK'}
+
+
+@app.route('/delete/<type>/<int:id>', methods=['GET', 'POST'])
+@login_required
+def delete_item(type, id):
+    sesion = db_session.create_session()
+    if type == 'job':
+        item = sesion.query(Jobs).get(id)
+    elif type == 'dep':
+        item = sesion.query(Departments).get(id)
+    if not item:
         abort(404)
-    if job.tm_leader.id != current_user.id and job.creator_id != current_user.id:
+    if type == 'job' and item.tm_leader.id != current_user.id and item.creator_id != current_user.id:
         abort(403)
-    sesion.delete(job)
+    elif type == 'dep' and item.chief_m.id != current_user.id:
+        abort(403)
+    sesion.delete(item)
     sesion.commit()
     return redirect('/')
 
 
-@app.route('/editjob/<int:job_id>', methods=['GET', 'POST'])
+@app.route('/edit/<type>/<int:id>', methods=['GET', 'POST'])
 @login_required
-def edit_job(job_id):
-    form = NewJobForm()
-    form.submit.label.text = 'Edit'
-    sesion = db_session.create_session()
-    job = sesion.query(Jobs).get(job_id)
-    if not job:
-        abort(404)
-    if request.method == 'GET':
-        form.collaborator.data = 'None'
-        form.job.data = job.job
-        form.work_size.data = job.work_size
-        form.team_leader.data = job.team_leader
-        form.start_date.data = job.start_date
-        form.end_date.data = job.end_date
-        form.is_finished.data = job.is_finished
+def edit_item(type, id):
+    if type == 'job':
+        form = NewJobForm()
+        form.submit.label.text = 'Edit'
+        sesion = db_session.create_session()
+        job = sesion.query(Jobs).get(id)
+        if not job:
+            abort(404)
+        if request.method == 'GET':
+            form.collaborator.data = 'None'
+            form.job.data = job.job
+            form.work_size.data = job.work_size
+            form.team_leader.data = job.team_leader
+            form.start_date.data = job.start_date
+            form.end_date.data = job.end_date
+            form.is_finished.data = job.is_finished
+        if form.validate_on_submit():
+            resp = check_job(form, 'newjob.html')
+            if resp['response'][0] != 'OK':
+                return render_template(resp['response'][0], add_title='Job edit', title='Job edit',
+                                       form=resp['response'][1])
+            job.team_leader = form.team_leader.data
+            job.job = form.job.data
+            job.work_size = form.work_size.data
+            job.collaborators = form.collaborator.data
+            job.start_date = resp['response'][1]
+            job.end_date = resp['response'][2]
+            job.is_finished = form.is_finished.data
+            sesion.commit()
+            sesion.close()
+            return redirect('/')
+        return render_template('newjob.html', add_title='Edit job', title='Job edit', form=form)
+    elif type == 'dep':
+        form = NewDepartmentForm()
+        form.submit.label.text = 'Edit'
+        sesion = db_session.create_session()
+        dep = sesion.query(Departments).get(id)
+        if not dep:
+            abort(404)
+        if request.method == 'GET':
+            form.chief.data = dep.chief
+            form.email.data = dep.email
+            form.members.data = dep.members
+            form.title.data = dep.title
+        if form.validate_on_submit():
+            resp = check_new_dep(form)
+            if resp['response'] != 'OK':
+                return render_template('newjob.html', add_title='Dep. edit', title='Dep. edit', form=resp['response'])
+            dep.title = form.title.data
+            dep.members = form.members.data
+            dep.chief = form.chief.data
+            dep.email = form.email.data
+            sesion.commit()
+            sesion.close()
+            return redirect('/')
+        return render_template('newjob.html', add_title='Dep. edit', title='Dep. edit', form=form)
+
+
+@app.route('/adddepartment', methods=['GET', 'POST'])
+@login_required
+def new_department():
+    form = NewDepartmentForm()
     if form.validate_on_submit():
-        resp = check_job(form, 'editjob.html')
-        if resp['response'][0] != 'OK':
-            return render_template(resp['response'][0], title='Job edit', form=resp['response'][1])
-        job.team_leader = form.team_leader.data
-        job.job = form.job.data
-        job.work_size = form.work_size.data
-        job.collaborators = form.collaborator.data
-        job.start_date = resp['response'][1]
-        job.end_date = resp['response'][2]
-        job.is_finished = form.is_finished.data
+        resp = check_new_dep(form)
+        if resp['response'] != 'OK':
+            return render_template('newjob.html', add_title='New department', form=form, title='New department')
+        sesion = db_session.create_session()
+        department = Departments(title=form.title.data,
+                                 chief=form.chief.data,
+                                 members=form.members.data,
+                                 email=form.email.data)
+        sesion.add(department)
         sesion.commit()
         sesion.close()
         return redirect('/')
-    return render_template('newjob.html', title='Job edit', form=form)
+    return render_template('newjob.html', add_title='New department', form=form, title='New department')
 
 
 @app.route('/addjob', methods=['GET', 'POST'])
@@ -133,7 +222,7 @@ def new_job():
     if form.validate_on_submit():
         resp = check_job(form, 'newjob.html')
         if resp['response'][0] != 'OK':
-            return render_template(resp['response'][0], title='New job', form=resp['response'][1])
+            return render_template(resp['response'][0], add_title='New job', title='New job', form=resp['response'][1])
         sesion = db_session.create_session()
         job = Jobs(team_leader=form.team_leader.data,
                    job=form.job.data,
@@ -147,7 +236,7 @@ def new_job():
         sesion.commit()
         sesion.close()
         return redirect('/')
-    return render_template('newjob.html', title='New job', form=form)
+    return render_template('newjob.html', add_title='New job', title='New job', form=form)
 
 
 @app.route('/logout')

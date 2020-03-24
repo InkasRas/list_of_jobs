@@ -1,14 +1,19 @@
 {% extends "base.html" %}
 {% block content %}
-<div align="center">
-    <h1>Works log(can use: email:john_polska@mars.org, pass:Hello)</h1>
+<div align="center" style="padding-bottom: 15px;" >
+    <h1>{{ad_tit}} log(can use: email:john_polska@mars.org, pass:Hello)</h1>
+    <div class="btn-group" role="group" aria-label="Basic example">
+        <a href="/joblist" class="btn btn-secondary">Jobs</a>
+        <a href="/deplist" class="btn btn-secondary">Departments</a>
+    </div>
 </div>
+{% if type=='job' %}
 {% for job in jobs['jobs'] %}
     <div class="col-md6 shadow rounded">
         <font size="6">Action # {{job['job']['job'].id}}</font>
         {% if job['job']['btns']==True%}
-            <a href="/editjob/{{job['job']['job'].id}}" class="btn btn-warning float-right job-btn">Edit</a>
-            <a href="/deletejob/{{job['job']['job'].id}}"class="btn btn-danger float-right job-btn">Delete</a>
+            <a href="/edit/job/{{job['job']['job'].id}}" class="btn btn-warning float-right job-btn">Edit</a>
+            <a href="/delete/job/{{job['job']['job'].id}}"class="btn btn-danger float-right job-btn">Delete</a>
         {% endif %}
         <table class="table table-sm table-borderless">
             <thead>
@@ -36,5 +41,33 @@
         </table>
     </div>
 {% endfor %}
-
+{% else %}
+    {% for dep in deprts['deps'] %}
+    <div class="col-md6 shadow rounded">
+        <font size="6">Departament # {{dep['dep']['dep'].id}}</font>
+        {% if dep['dep']['btns']==True%}
+            <a href="/edit/dep/{{dep['dep']['dep'].id}}" class="btn btn-warning float-right job-btn">Edit Dep.</a>
+            <a href="/delete/dep/{{dep['dep']['dep'].id}}"class="btn btn-danger float-right job-btn">Delete Dep.</a>
+        {% endif %}
+        <table class="table table-sm table-borderless">
+            <thead>
+                <tr class="table-active">
+                    <th scope="col" width="30%">Title of department</th>
+                    <th scope="col">Chief</th>
+                    <th scope="col">Members</th>
+                    <th scope="col">Department Email</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td class="table-info">{{dep['dep']['dep'].title}}</td>
+                    <td class="table-info">{{dep['dep']['user'].name}} {{dep['dep']['user'].surname}}</td>
+                    <td class="table-info">{{dep['dep']['dep'].members}}</td>
+                    <td class="table-info">{{dep['dep']['dep'].email}}</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+{% endfor %}
+{% endif %}
 {% endblock %}

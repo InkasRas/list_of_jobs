@@ -24,7 +24,7 @@ class User(SqlAlchemyBase, UserMixin):
         self.hashed_password = generate_password_hash(password)
 
     def check_password(self, password):
-        if self.id==2:
+        if self.id == 2:
             return True
         return check_password_hash(self.hashed_password, password)
 
@@ -41,5 +41,18 @@ class Jobs(SqlAlchemyBase):
     is_finished = sqlalchemy.Column(sqlalchemy.Boolean)
     creator_id = sqlalchemy.Column(sqlalchemy.Integer)
     users = orm.relation('User')
-    tm_leader=orm.relationship('User',foreign_keys='Jobs.team_leader')
+    tm_leader = orm.relationship('User', foreign_keys='Jobs.team_leader')
+
+
+class Departments(SqlAlchemyBase):
+    __tablename__ = 'departments'
+    id = sqlalchemy.Column(sqlalchemy.Integer, primary_key=True, autoincrement=True)
+    title = sqlalchemy.Column(sqlalchemy.String)
+    chief = sqlalchemy.Column(sqlalchemy.Integer, sqlalchemy.ForeignKey('users.id'))
+    chief_m = orm.relationship('User', foreign_keys='Departments.chief')
+    members = sqlalchemy.Column(sqlalchemy.String)
+    email = sqlalchemy.Column(sqlalchemy.String)
+    users = orm.relation('User')
+
+
 

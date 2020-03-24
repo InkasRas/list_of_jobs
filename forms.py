@@ -43,3 +43,9 @@ class NewJobForm(FlaskForm):
     end_date = DateField('End date', default=datetime.datetime.today(), format='%Y-%m-%d')
     is_finished = BooleanField('Is finished', default=False)
     submit = SubmitField('Add job')
+class NewDepartmentForm(FlaskForm):
+    title=StringField('Title',validators=[DataRequired()])
+    chief=IntegerField('Chief id',validators=[DataRequired()])
+    members=StringField('Members',validators=[DataRequired()])
+    email=StringField('Email',validators=[DataRequired()])
+    submit=SubmitField('Add')
