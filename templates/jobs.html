@@ -1,11 +1,15 @@
 {% extends "base.html" %}
 {% block content %}
 <div align="center">
-    <h1>Works log</h1>
+    <h1>Works log(can use: email:john_polska@mars.org, pass:Hello)</h1>
 </div>
-{% for job,name in jobs %}
-    <div>
-        <h2>Action # {{job.id}}</h2>
+{% for job in jobs['jobs'] %}
+    <div class="col-md6 shadow rounded">
+        <font size="6">Action # {{job['job']['job'].id}}</font>
+        {% if job['job']['btns']==True%}
+            <a href="/editjob/{{job['job']['job'].id}}" class="btn btn-warning float-right job-btn">Edit</a>
+            <a href="/deletejob/{{job['job']['job'].id}}"class="btn btn-danger float-right job-btn">Delete</a>
+        {% endif %}
         <table class="table table-sm table-borderless">
             <thead>
                 <tr class="table-active">
@@ -18,11 +22,11 @@
             </thead>
             <tbody>
                 <tr>
-                    <td class="table-info">{{job.job}}</td>
-                    <td class="table-info">{{name}}</td>
-                    <td class="table-info">{{job.work_size}} hours</td>
-                    <td class="table-info">{{job.collaborators}}</td>
-                    {% if job.is_finished == False %}
+                    <td class="table-info">{{job['job']['job'].job}}</td>
+                    <td class="table-info">{{job['job']['user'].name}} {{job['job']['user'].surname}}</td>
+                    <td class="table-info">{{job['job']['job'].work_size}} hours</td>
+                    <td class="table-info">{{job['job']['job'].collaborators}}</td>
+                    {% if job['job']['job'].is_finished == False %}
                     <td class="table-danger">Is not finished</td>
                     {% else %}
                     <td class="table-success">Is finished</td>
@@ -31,7 +35,6 @@
             </tbody>
         </table>
     </div>
-
 {% endfor %}
 
 {% endblock %}
