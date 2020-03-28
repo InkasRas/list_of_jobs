@@ -42,6 +42,7 @@ class Jobs(SqlAlchemyBase):
     creator_id = sqlalchemy.Column(sqlalchemy.Integer)
     users = orm.relation('User')
     tm_leader = orm.relationship('User', foreign_keys='Jobs.team_leader')
+    categories = orm.relation('Category', secondary='association', backref='jobs')
 
 
 class Departments(SqlAlchemyBase):
@@ -55,4 +56,13 @@ class Departments(SqlAlchemyBase):
     users = orm.relation('User')
 
 
+class Category(SqlAlchemyBase):
+    __tablename__ = 'category'
+    id = sqlalchemy.Column(sqlalchemy.Integer, primary_key=True, autoincrement=True)
+    cat_id = sqlalchemy.Column(sqlalchemy.Integer, unique=True)
 
+
+association_table = sqlalchemy.Table('association', SqlAlchemyBase.metadata,
+                                     sqlalchemy.Column('jobs', sqlalchemy.Integer, sqlalchemy.ForeignKey('jobs.id')),
+                                     sqlalchemy.Column('category', sqlalchemy.Integer,
+                                                       sqlalchemy.ForeignKey('category.id')))

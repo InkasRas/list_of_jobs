@@ -2,7 +2,7 @@ import sqlalchemy
 import datetime
 import db_session
 import os
-from __all_models import User, Jobs, Departments
+from __all_models import User, Jobs, Departments, Category
 from flask import Flask, render_template, redirect, url_for, session, request, make_response, abort
 from forms import RegisterForm, LoginForm, NewJobForm, NewDepartmentForm
 from flask_login import login_user, LoginManager, current_user, logout_user, login_required
@@ -116,6 +116,14 @@ def check_new_dep(form: NewDepartmentForm):
     return {'response': 'OK'}
 
 
+def check_cat_exists(cat_id):
+    sesion = db_session.create_session()
+    if not sesion.query(Category).filter(Category.cat_id == cat_id).first():
+        sesion.add(Category(cat_id=cat_id))
+        sesion.commit()
+        sesion.close()
+
+
 @app.route('/delete/<type>/<int:id>', methods=['GET', 'POST'])
 @login_required
 def delete_item(type, id):
@@ -152,6 +160,8 @@ def edit_item(type, id):
             form.team_leader.data = job.team_leader
             form.start_date.data = job.start_date
             form.end_date.data = job.end_date
+            if len(job.categories) > 0:
+                form.category_id.data = job.categories[0].cat_id
             form.is_finished.data = job.is_finished
         if form.validate_on_submit():
             resp = check_job(form, 'newjob.html')
@@ -165,6 +175,9 @@ def edit_item(type, id):
             job.start_date = resp['response'][1]
             job.end_date = resp['response'][2]
             job.is_finished = form.is_finished.data
+            check_cat_exists(form.category_id.data)
+            job.categories.clear()
+            job.categories.append(sesion.query(Category).filter(Category.cat_id == form.category_id.data).first())
             sesion.commit()
             sesion.close()
             return redirect('/')
@@ -224,6 +237,11 @@ def new_job():
         if resp['response'][0] != 'OK':
             return render_template(resp['response'][0], add_title='New job', title='New job', form=resp['response'][1])
         sesion = db_session.create_session()
+        category_id = form.category_id.data
+        check_cat_exists(category_id)
+        sesion = db_session.create_session()
+        categ = sesion.query(Category).filter(Category.cat_id == category_id).first()
+        print(categ)
         job = Jobs(team_leader=form.team_leader.data,
                    job=form.job.data,
                    work_size=form.work_size.data,
@@ -232,6 +250,7 @@ def new_job():
                    end_date=resp['response'][2],
                    is_finished=form.is_finished.data,
                    creator_id=current_user.id)
+        job.categories.append(categ)
         sesion.add(job)
         sesion.commit()
         sesion.close()

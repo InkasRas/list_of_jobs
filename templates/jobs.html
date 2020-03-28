@@ -22,6 +22,7 @@
                     <th scope="col">Team leader</th>
                     <th scope="col">Duration</th>
                     <th scope="col">List of collaborators</th>
+                    <th scope="col">Hazard category</th>
                     <th scope="col">Is finished</th>
                 </tr>
             </thead>
@@ -31,6 +32,11 @@
                     <td class="table-info">{{job['job']['user'].name}} {{job['job']['user'].surname}}</td>
                     <td class="table-info">{{job['job']['job'].work_size}} hours</td>
                     <td class="table-info">{{job['job']['job'].collaborators}}</td>
+                    {% if job['job']['job'].categories|length%}
+                    <td class="table-info">{{job['job']['job'].categories[0].cat_id}}</td>
+                    {% else %}
+                    <td class="table-info">No category</td>
+                    {% endif %}
                     {% if job['job']['job'].is_finished == False %}
                     <td class="table-danger">Is not finished</td>
                     {% else %}
