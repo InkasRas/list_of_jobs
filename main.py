@@ -1,6 +1,8 @@
 import sqlalchemy
 import datetime
 import db_session
+import jobs_api
+import users_api
 import os
 from __all_models import User, Jobs, Departments, Category
 from flask import Flask, render_template, redirect, url_for, session, request, make_response, abort
@@ -302,4 +304,6 @@ def forbidden(error):
 
 if __name__ == '__main__':
     db_session.global_init('blogs.sqlite')
+    app.register_blueprint(jobs_api.blueprint)
+    app.register_blueprint(users_api.blueprint)
     app.run()

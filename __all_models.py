@@ -1,5 +1,6 @@
 import datetime
 import sqlalchemy
+from sqlalchemy_serializer import SerializerMixin
 from sqlalchemy import orm
 from db_session import SqlAlchemyBase
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -29,7 +30,7 @@ class User(SqlAlchemyBase, UserMixin):
         return check_password_hash(self.hashed_password, password)
 
 
-class Jobs(SqlAlchemyBase):
+class Jobs(SqlAlchemyBase, SerializerMixin):
     __tablename__ = 'jobs'
     id = sqlalchemy.Column(sqlalchemy.Integer, primary_key=True, autoincrement=True)
     team_leader = sqlalchemy.Column(sqlalchemy.Integer, sqlalchemy.ForeignKey('users.id'))
@@ -43,6 +44,16 @@ class Jobs(SqlAlchemyBase):
     users = orm.relation('User')
     tm_leader = orm.relationship('User', foreign_keys='Jobs.team_leader')
     categories = orm.relation('Category', secondary='association', backref='jobs')
+
+    def job_to_dict(self):
+        dic = {}
+        for c in self.__class__.__table__.columns:
+            v = getattr(self, c.name)
+            try:
+                dic[c.name] = v
+            except Exception:
+                pass
+        return dic
 
 
 class Departments(SqlAlchemyBase):
