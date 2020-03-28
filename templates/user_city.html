@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block content %}
+{% for msg in get_flashed_messages() %}
+<div class="alert alert-danger" align="center">
+    {{msg}}
+</div>
+{% endfor %}
+{% if user %}
+    <div align="center">
+        <h2>Nostalgy</h2>
+        <h2>{{user.name}} {{user.surname}}</h2>
+        <h4>Hometown {{user.from_city}}</h4>
+        <img src="{{img_src}}">
+    </div>
+{% endif %}
+{% endblock %}
