@@ -3,9 +3,12 @@ import datetime
 import db_session
 import jobs_api
 import users_api
+from requests import get
+import json
 import os
 from __all_models import User, Jobs, Departments, Category
-from flask import Flask, render_template, redirect, url_for, session, request, make_response, abort
+from flask import Flask, render_template, redirect, url_for, session, request, make_response, abort, flash, \
+    get_flashed_messages
 from forms import RegisterForm, LoginForm, NewJobForm, NewDepartmentForm
 from flask_login import login_user, LoginManager, current_user, logout_user, login_required
 
@@ -292,6 +295,30 @@ def register():
     return render_template('register.html', form=form, title='Register')
 
 
+def get_img_src(resp):
+    geocode_resp = get('https://geocode-maps.yandex.ru/1.x',
+                       params={'apikey': '40d1649f-0493-4b70-98ba-98533de7710b',
+                               'geocode': resp['from_city'],
+                               'lang': 'en_US',
+                               'format': 'json'})
+    points = geocode_resp.json()['response']['GeoObjectCollection']['featureMember'][0]['GeoObject']['boundedBy'][
+        'Envelope']
+    coords = '~'.join([','.join(points['lowerCorner'].split()), ','.join(points['upperCorner'].split())])
+    url = f'https://static-maps.yandex.ru/1.x/?l=sat&bbox={coords}'
+    return url
+
+
+@app.route('/users_show/<int:user_id>')
+def users_show(user_id):
+    resp = get(f'http://127.0.0.1:5000/api/users/{user_id}').json()
+    if 'error' in resp:
+        flash(resp['error'])
+        return render_template('user_city.html', title='Hometown')
+    img_src = get_img_src(resp['user'])
+    print('img_src', img_src)
+    return render_template('user_city.html', img_src=img_src, title='Hometown', user=resp['user'], error='')
+
+
 @app.errorhandler(404)
 def not_found(error):
     return render_template('not_found.html', title='Not found', message='Not found')
@@ -304,5 +331,6 @@ def forbidden(error):
 
 if __name__ == '__main__':
     db_session.global_init('blogs.sqlite')
-    app.register_blueprint(jobs_api.blueprint)
     app.register_blueprint(users_api.blueprint)
+    app.register_blueprint(jobs_api.blueprint)
+    app.run()
