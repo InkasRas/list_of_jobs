@@ -306,5 +306,3 @@ if __name__ == '__main__':
     db_session.global_init('blogs.sqlite')
     app.register_blueprint(jobs_api.blueprint)
     app.register_blueprint(users_api.blueprint)
-    porrt=int(os.environ.get('PORT',5000))
-    app.run(host='0.0.0.0',port=porrt)
